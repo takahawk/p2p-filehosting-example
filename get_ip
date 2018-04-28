@@ -1,0 +1,4 @@
+#!/bin/bash
+id=`docker ps | grep $1 | awk '{ print $1 }'`
+address=`docker inspect $id | grep "\"IPAddress\": \"172" | awk '{ print $2 }'`
+echo ${address//[\",]}
