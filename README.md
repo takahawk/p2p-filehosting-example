@@ -3,7 +3,7 @@
 Create Docker network to run nodes on it:
 
 ```bash
-docker network create --driver=bridge p2p-fh-newtork
+docker network create --driver=bridge p2p-fh-network
 ```
 
 Build containers for your nodes
@@ -18,7 +18,7 @@ After the previous steps are completed, you may run your nodes.
 First node:
 
 ```bash
-docker run -p 1337:8000 --net=p2p-fh-newtork node1
+docker run -p 1337:8000 --net=p2p-fh-network node1
 ```
 
 Then another nodes that connects to first:
@@ -29,7 +29,7 @@ docker run -p 8000:1338 --net=p2p-fh-network node2 /go/bin/app `./get_ip node1`:
 
 # after previous step you can use either node1 or node 2 as node to connect
 
-docker run -p 8000:1338 --net=p2p-fh-network node3 /go/bin/app `./get_ip node2`:8000
+docker run -p 8000:1339 --net=p2p-fh-network node3 /go/bin/app `./get_ip node2`:8000
 ```
 
 

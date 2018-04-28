@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 )
 
-var peerList = PeerList { make([]string, 0) }
+var peerList = PeerList { make([]Peer, 0) }
 
 const SERVER_PORT = 8000
 
@@ -38,11 +38,21 @@ func HandleRequest(conn net.Conn) {
 
 	fmt.Println(m)
 	switch m.Code {
+
 	case MSG_CODE_ASSOC:
 		addr := conn.RemoteAddr().String()
-		AddPeer(peerList, addr)
-		fmt.Println("Adding new peer to list: " + addr)
+		AddPeer(&peerList, addr)
 		conn.Write([]byte { RESPONSE_CODE_OK })
+		conn.Close()
+		PropagatePeer(&peerList, addr, func(peerAddr string) { StartClient(peerAddr, GetPropapagCallback(addr))})
+
+	case MSG_CODE_PROPAG:
+		fmt.Println("Propagation")
+		addr := string(m.Payload)
+		AddPeer(&peerList, addr)
+		conn.Write([]byte { RESPONSE_CODE_OK })
+		conn.Close()
+		PropagatePeer(&peerList, addr, func(peerAddr string) { StartClient(peerAddr, GetPropapagCallback(addr))})
 	}
 	conn.Close()
 }
@@ -55,13 +65,29 @@ func SendAssocRequest(conn net.Conn) {
 		fmt.Println("JSON encoding error")
 		return
 	}
-	fmt.Println(string(b))
 	conn.Write(b)
 	conn.Read(buf)
 
 	if buf[0] == RESPONSE_CODE_OK {
 		addr := conn.RemoteAddr().String()
-		AddPeer(peerList, addr)
-		fmt.Println("Adding new peer to list: " + addr)
+		AddPeer(&peerList, addr)
+	}
+}
+
+func GetPropapagCallback(addr string) func(net.Conn) {
+	return func(conn net.Conn) {
+		buf := make([]byte, 1)
+		request := &Message { MSG_CODE_PROPAG, []byte(addr)}
+		b, err := json.Marshal(request)
+		if err != nil {
+			fmt.Println("JSON encoding error")
+			return
+		}
+		conn.Write(b)
+		conn.Read(buf)
+
+		if buf[0] == RESPONSE_CODE_OK {
+			AddPeer(&peerList, addr)
+		}
 	}
 }
