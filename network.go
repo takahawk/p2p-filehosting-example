@@ -31,3 +31,14 @@ func StartServer(port int, h handler) {
 		h(conn)
 	}
 }
+
+func StartClient(addr string, h handler) {
+	fmt.Println("Connecting to: " + addr)
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		fmt.Println("Error establishing connection: ", err.Error())
+		return
+	}
+
+	h(conn)
+}
