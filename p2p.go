@@ -32,7 +32,7 @@ func IsPeerKnown(list *[]Peer, peer Peer) bool {
 
 func AddAndPropagatePeer(list *[]Peer, peer Peer, callback peerCallback) {
 	// if peer is already known - we don't propagate it further
-	if IsPeerKnown(list, peer) {
+	if IsPeerKnown(list, peer) || peer.IpAddress == self.IpAddress {
 		return
 	}
 	prevList := *list

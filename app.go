@@ -6,12 +6,14 @@ import (
 	"net"
 	"encoding/json"
 	"strconv"
+	"time"
 )
 
 var peerList = make([]Peer, 0)
 
 const SERVER_PORT = 8000
 const BUFFER_SIZE = 1024
+const CLI_STARTUP_DELAY = 500
 
 func main() {
 	args := os.Args[1:]
@@ -20,6 +22,7 @@ func main() {
 	}
 
 	go StartServer(SERVER_PORT, HandleRequest)
+	time.Sleep(CLI_STARTUP_DELAY * time.Millisecond)
 	Interact()
 }
 
