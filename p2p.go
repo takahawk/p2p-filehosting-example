@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"crypto/rsa"
 )
 
 type Peer struct {
-	// TODO: add public key
+	Key rsa.PublicKey
 	IpAddress  string
 }
 
@@ -22,8 +23,7 @@ func AddPeer(list *[]Peer, peer Peer) {
 
 func IsPeerKnown(list *[]Peer, peer Peer) bool {
 	for _, p := range *list {
-		// FIXME: check by public key
-		if p.IpAddress == peer.IpAddress {
+		if p.Key == peer.Key {
 			return true
 		}
 	}
@@ -32,7 +32,7 @@ func IsPeerKnown(list *[]Peer, peer Peer) bool {
 
 func AddAndPropagatePeer(list *[]Peer, peer Peer, callback peerCallback) {
 	// if peer is already known - we don't propagate it further
-	if IsPeerKnown(list, peer) || peer.IpAddress == self.IpAddress {
+	if IsPeerKnown(list, peer) || peer.Key == self.Key {
 		return
 	}
 	prevList := *list
@@ -54,5 +54,4 @@ func GetSelf(useIpAddr string) Peer {
 }
 
 var self = Peer {
-	// TODO: good place for public key
 }

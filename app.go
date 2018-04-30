@@ -7,21 +7,28 @@ import (
 	"encoding/json"
 	"strconv"
 	"time"
+	"crypto/rsa"
 )
 
 var peerList = make([]Peer, 0)
+var key *rsa.PrivateKey
 
 const SERVER_PORT = 8000
 const BUFFER_SIZE = 1024
 const CLI_STARTUP_DELAY = 500
 
 func main() {
+	key = GenerateKey()
+	self.Key = key.PublicKey
+
 	args := os.Args[1:]
 	if len(args) > 0 {
 		StartClient(args[0], SendAssocRequest)
 	}
 
 	go StartServer(SERVER_PORT, HandleRequest)
+
+
 	time.Sleep(CLI_STARTUP_DELAY * time.Millisecond)
 	Interact()
 }
