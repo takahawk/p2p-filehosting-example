@@ -7,5 +7,5 @@ func SplitAddress(address string) (string, string) {
 		}
 	}
 
-	return address, ""
+	return address	, ""
 }

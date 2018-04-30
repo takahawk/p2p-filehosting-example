@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"net"
 	"encoding/json"
+	"strconv"
 )
 
-var peerList = PeerList { make([]Peer, 0) }
+var peerList = make([]Peer, 0)
 
 const SERVER_PORT = 8000
+const BUFFER_SIZE = 1024
 
 func main() {
 	args := os.Args[1:]
@@ -21,14 +23,16 @@ func main() {
 }
 
 func HandleRequest(conn net.Conn) {
-	buf := make([]byte, 1024)
+	defer conn.Close()
+
+	buf := make([]byte, BUFFER_SIZE)
 	n, err := conn.Read(buf)
 	if err != nil {
 		fmt.Println("Reading from socket error")
 		return
 	}
-	fmt.Println(buf[:n])
-	var m Message
+
+	var m RequestMeta
 	err = json.Unmarshal(buf[:n], &m)
 
 	if err != nil {
@@ -36,58 +40,96 @@ func HandleRequest(conn net.Conn) {
 		return
 	}
 
-	fmt.Println(m)
 	switch m.Code {
 
-	case MSG_CODE_ASSOC:
-		addr := conn.RemoteAddr().String()
-		AddPeer(&peerList, addr)
-		conn.Write([]byte { RESPONSE_CODE_OK })
-		conn.Close()
-		PropagatePeer(&peerList, addr, func(peerAddr string) { StartClient(peerAddr, GetPropapagCallback(addr))})
+	case REQ_CODE_ASSOC:
+		var m AssocRequest
+		err := json.Unmarshal(buf[:n], &m)
+		if err != nil {
+			fmt.Println("JSON decoding error")
+		}
 
-	case MSG_CODE_PROPAG:
+		response := AssocResponse{append(peerList, GetSelf(conn.LocalAddr().String()))}
+		bytes, err := json.Marshal(response)
+		if err != nil {
+			fmt.Println("JSON encoding error")
+			return
+		}
+		conn.Write(bytes)
+		PropagatePeer(&peerList, m.Peer, func(peer Peer) { StartClient(peer.IpAddress, GetPropagCallback(m.Peer))})
+		AddPeer(&peerList, m.Peer)
+	case REQ_CODE_PROPAG:
 		fmt.Println("Propagation")
-		addr := string(m.Payload)
-		AddPeer(&peerList, addr)
-		conn.Write([]byte { RESPONSE_CODE_OK })
-		conn.Close()
-		PropagatePeer(&peerList, addr, func(peerAddr string) { StartClient(peerAddr, GetPropapagCallback(addr))})
+		var m PropagationRequest
+		err := json.Unmarshal(buf[:n], &m)
+		if err != nil {
+			fmt.Println("JSON decoding error")
+		}
+		PropagatePeer(&peerList, m.Peer, func(peer Peer) { StartClient(peer.IpAddress, GetPropagCallback(m.Peer))})
+		AddPeer(&peerList, m.Peer)
 	}
-	conn.Close()
 }
 
 func SendAssocRequest(conn net.Conn) {
-	buf := make([]byte, 1)
-	request := &Message { MSG_CODE_ASSOC, make([]byte, 0)}
+	defer conn.Close()
+
+	addr, _ := SplitAddress(conn.LocalAddr().String())
+	addr = addr + ":" + strconv.Itoa(SERVER_PORT)
+
+	buf := make([]byte, BUFFER_SIZE)
+	request := MakeAssocRequest(GetSelf(addr))
 	b, err := json.Marshal(request)
 	if err != nil {
 		fmt.Println("JSON encoding error")
 		return
 	}
 	conn.Write(b)
-	conn.Read(buf)
 
-	if buf[0] == RESPONSE_CODE_OK {
-		addr := conn.RemoteAddr().String()
-		AddPeer(&peerList, addr)
+	n, err := conn.Read(buf)
+
+	if err != nil {
+		fmt.Println("Reading error")
+		return
+	}
+
+	var m AssocResponse
+	err = json.Unmarshal(buf[:n], &m)
+
+	if err != nil {
+		fmt.Println("JSON decoding error")
+		return
+	}
+
+	for _, peer := range(m.KnownPeers) {
+		AddPeer(&peerList, peer)
 	}
 }
 
-func GetPropapagCallback(addr string) func(net.Conn) {
+func GetPropagCallback(peer Peer) func(net.Conn) {
 	return func(conn net.Conn) {
-		buf := make([]byte, 1)
-		request := &Message { MSG_CODE_PROPAG, []byte(addr)}
+		defer conn.Close()
+
+		request := MakePropagationRequest(peer)
+		buf := make([]byte, BUFFER_SIZE)
 		b, err := json.Marshal(request)
 		if err != nil {
 			fmt.Println("JSON encoding error")
 			return
 		}
 		conn.Write(b)
-		conn.Read(buf)
 
-		if buf[0] == RESPONSE_CODE_OK {
-			AddPeer(&peerList, addr)
+		n, err := conn.Read(buf)
+		if err != nil {
+			fmt.Println("Reading error")
+			return
+		}
+
+		var response PropagationResponse
+		err = json.Unmarshal(buf[:n], &response)
+
+		if err != nil {
+			fmt.Println("JSON decoding error")
+			return
 		}
 	}
 }

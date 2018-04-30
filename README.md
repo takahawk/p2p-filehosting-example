@@ -36,6 +36,7 @@ docker run -p 8000:1339 --net=p2p-fh-network node3 /go/bin/app `./get_ip node2`:
 # TODO #
 ~~basic server~~  
 ~~basic peer-to-peer logic~~  
+fix propagation issues  
 sending files  
 retrivieng files  
 encryption  
