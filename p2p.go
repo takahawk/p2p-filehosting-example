@@ -30,12 +30,15 @@ func IsPeerKnown(list *[]Peer, peer Peer) bool {
 	return false
 }
 
-func PropagatePeer(list *[]Peer, peer Peer, callback peerCallback) {
+func AddAndPropagatePeer(list *[]Peer, peer Peer, callback peerCallback) {
 	// if peer is already known - we don't propagate it further
 	if IsPeerKnown(list, peer) {
 		return
 	}
-	for _, knownPeer := range *list {
+	prevList := *list
+	AddPeer(list, peer)
+
+	for _, knownPeer := range prevList {
 			callback(knownPeer)
 	}
 }

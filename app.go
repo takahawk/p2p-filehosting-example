@@ -56,8 +56,8 @@ func HandleRequest(conn net.Conn) {
 			return
 		}
 		conn.Write(bytes)
-		PropagatePeer(&peerList, m.Peer, func(peer Peer) { StartClient(peer.IpAddress, GetPropagCallback(m.Peer))})
-		AddPeer(&peerList, m.Peer)
+		AddAndPropagatePeer(&peerList, m.Peer, func(peer Peer) { StartClient(peer.IpAddress, GetPropagCallback(m.Peer))})
+
 	case REQ_CODE_PROPAG:
 		fmt.Println("Propagation")
 		var m PropagationRequest
@@ -65,8 +65,8 @@ func HandleRequest(conn net.Conn) {
 		if err != nil {
 			fmt.Println("JSON decoding error")
 		}
-		PropagatePeer(&peerList, m.Peer, func(peer Peer) { StartClient(peer.IpAddress, GetPropagCallback(m.Peer))})
-		AddPeer(&peerList, m.Peer)
+
+		AddAndPropagatePeer(&peerList, m.Peer, func(peer Peer) { StartClient(peer.IpAddress, GetPropagCallback(m.Peer))})
 	}
 }
 

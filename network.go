@@ -28,7 +28,7 @@ func StartServer(port int, h handler) {
 			return
 		}
 
-		h(conn)
+		go h(conn)
 	}
 }
 
