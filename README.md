@@ -18,18 +18,18 @@ After the previous steps are completed, you may run your nodes.
 First node:
 
 ```bash
-docker run -p 1337:8000 --net=p2p-fh-network node1
+docker run -i -p 1337:8000 --net=p2p-fh-network node1
 ```
 
 Then another nodes that connects to first:
 ```bash
 # you may use get_ip script for your convenience
 
-docker run -p 8000:1338 --net=p2p-fh-network node2 /go/bin/app `./get_ip node1`:8000
+docker run -i -p 8000:1338 --net=p2p-fh-network node2 /go/bin/app `./get_ip node1`:8000
 
 # after previous step you can use either node1 or node 2 as node to connect
 
-docker run -p 8000:1339 --net=p2p-fh-network node3 /go/bin/app `./get_ip node2`:8000
+docker run -i -p 8000:1339 --net=p2p-fh-network node3 /go/bin/app `./get_ip node2`:8000
 ```
 
 

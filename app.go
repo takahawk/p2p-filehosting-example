@@ -19,7 +19,8 @@ func main() {
 		StartClient(args[0], SendAssocRequest)
 	}
 
-	StartServer(SERVER_PORT, HandleRequest)
+	go StartServer(SERVER_PORT, HandleRequest)
+	Interact()
 }
 
 func HandleRequest(conn net.Conn) {
@@ -57,6 +58,7 @@ func HandleRequest(conn net.Conn) {
 		}
 		conn.Write(bytes)
 		AddAndPropagatePeer(&peerList, m.Peer, func(peer Peer) { StartClient(peer.IpAddress, GetPropagCallback(m.Peer))})
+		fmt.Println(peerList)
 
 	case REQ_CODE_PROPAG:
 		fmt.Println("Propagation")
@@ -67,6 +69,7 @@ func HandleRequest(conn net.Conn) {
 		}
 
 		AddAndPropagatePeer(&peerList, m.Peer, func(peer Peer) { StartClient(peer.IpAddress, GetPropagCallback(m.Peer))})
+		fmt.Println(peerList)
 	}
 }
 
